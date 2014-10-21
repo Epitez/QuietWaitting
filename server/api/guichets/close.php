@@ -1,5 +1,5 @@
 <?php
-include($_SERVER['DOCUMENT_ROOT'].'/db/conf.php');
+include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
 $idGuichet = isset($_POST['id_guichet']) ? $_POST['id_guichet'] : isset($_GET['id_guichet']) ? $_GET['id_guichet'] : 1;
 

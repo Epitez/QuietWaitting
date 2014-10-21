@@ -1,5 +1,5 @@
 <?php
-include($_SERVER['DOCUMENT_ROOT'].'/db/conf.php');
+include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
 $result = $dbh->query('CALL LISTER_TICKETS()');
 
