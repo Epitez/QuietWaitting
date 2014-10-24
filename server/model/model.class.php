@@ -7,59 +7,133 @@
     */
     abstract class Model {
 
-        protected $_id;
-        protected $_className;
+        protected $_className;  // The classname (used for the table name)
+
         /**
-        * This must be set for all models, this parameter set the column of the model.
-        */
+         * This must be set for all models, this parameter set the column of the model.
+         * Example : return ['author', 'content', 'article', 'created_at'];
+         **/
         protected static function attributes() {
             return Array();
         }
+
         /**
-        * This the column names of the model.
-        */
+         * This must be set for all models, this parameter set the primary key. This class handles only one primary key
+         * Example : return 'id';
+         **/
+        protected static function primary() {
+            return String();
+        }
+
+        /**
+         * This must be set for all models, this parameter set the defaults.
+         * Example : return ['name' => 'defaultValue'];
+         **/
+        protected static function defaults() {
+            return Array();
+        }
+
+        /**
+         * This is the column names of the model.
+         **/
         protected static function parameters() {
-            return static::attributes();
+            $tmp = [];
+            foreach(static::attributes() as $key => $value) {
+                array_push($tmp, static::_camelToSnake($value));
+            };
+            return $tmp;
         }
 
         /**
-        * Construct the object.
-        * If $bdd and $id are specified, will fetch the data in the database.
-        * You can add a where clause with $whereClause and the $bindedVariables.
-        */
+         * This is the primary key of the model.
+         **/
+        protected static function primaryKey() {
+            return static::_camelToSnake(static::primary());
+        }
+
         function __construct() {
-            $this->_id = NULL;
+            /**
+             * Set the primary key, result : $this->_nameOfPrimaryKey
+             **/
+            $newPrimaryKey = '_'.static::primaryKey();
+            $this->$newPrimaryKey = '';
+
+            /**
+             * Set the class name, used as table name and for debugging
+             **/
             $this->_className = strtolower(get_class($this));
+
+            /**
+             * Load by defaults the attributes, the result is $this->NameOfYourVar = NULL
+             * If you want to override this value, set the value in the child ctor
+             **/
+            foreach(static::attributes() as $key => $value) {
+                $newName = ucwords($key);
+                $this->$newName = NULL;
+            }
+
+            /**
+             * Set the defaults defined
+             **/
+            foreach(static::defaults() as $key => $value) {
+                $newName = ucwords($key);
+                $this->$newName = $value;
+            }
         }
 
         /**
-        * Id getter.
-        */
+         * Transform camel case to snake case
+         *
+         * @param string
+         * @return string
+         **/
+        private static function _camelToSnake($val) {
+            return strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/',"_$1", $val));
+        }
+
+        /**
+         * Transform snake case to camel case
+         *
+         * @param string
+         * @return string
+         **/
+        private static function _snakeToCamel($val) {
+            return str_replace(' ', '', ucwords(str_replace('_', ' ', $val)));
+        }
+
+        /**
+         * Id getter.
+         **/
         public function id() {
-            return $this->_id;
+            $_primaryKey = '_'.static::primaryKey();
+            return $this->$_primaryKey;
         }
 
 
         /**
-        * Get implementation.
-        */
-        public static function Get(PDO $bdd, $id, $whereClause = '', $bindedVariables = array()) {
+         * Get implementation.
+         * If $primary is specified, will fetch the data in the database.
+         * You can add a where clause with $whereClause and the $bindedVariables.
+         **/
+        public static function Get(PDO $bdd, $primary, $whereClause = '', $bindedVariables = array()) {
             $className = strtolower(get_called_class());
             $attributes = static::parameters();
-            $strQuery = 'SELECT id, ';
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
+
+            $strQuery = 'SELECT ' . $primaryKey . ', ';
             foreach ($attributes as $key => $attribute) { # append the attributes.
                 $strQuery .= $attribute.', ';
             }
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
-            $strQuery .= ' FROM '.$className.'s WHERE id = :id';
+            $strQuery .= ' FROM '.$className.'s WHERE ' . $primaryKey . ' = :'.$primaryKey;
             if (strlen($whereClause) > 0) {
                 $strQuery .= ' AND '.$whereClause.' ;';
             } else {
                 $strQuery .= ' ;';
             }
-
             $query = $bdd->prepare($strQuery);
-            $query->bindValue(':id', $id);
+            $query->bindValue(':'.$primaryKey, $primary); # bind the primary key
             foreach ($bindedVariables as $key => $variable) {
                 $query->bindValue($key, $variable);
             }
@@ -79,19 +153,29 @@
             }
             $result = new $className();
             foreach ($rows[0] as $key => $value) {
-                if ($key == "id") {
+                if ($key == $primaryKey) {
+                    $result->$_primaryKey = $value;
                     $result->_id = $value;
                     continue;
                 }
+                // Comment the next line if you want snake case
+                $key = static::_snakeToCamel($key);
                 $result->$key = $value;
             }
             return $result;
         }
 
+        /**
+         * GetAll implementation.
+         * You can add a where clause with $whereClause and the $bindedVariables.
+         **/
         public static function GetAll(PDO $bdd, $whereClause = '', $bindedVariables = array()) {
             $className = strtolower(get_called_class());
             $attributes = static::parameters();
-            $strQuery = 'SELECT id, ';
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
+
+            $strQuery = 'SELECT '.$primaryKey.', ';
             foreach ($attributes as $key => $attribute) { # append the attributes.
                 $strQuery .= $attribute.', ';
             }
@@ -122,10 +206,12 @@
             foreach ($rows as $index => $row) {
                 $result = new $className();
                 foreach ($row as $key => $value) {
-                    if ($key == "id") {
-                        $result->_id = $value;
+                    if ($key == $primaryKey) {
+                        $result->$_primaryKey = $value;
                         continue;
                     }
+                    // Comment the next line if you want snake case
+                    $key = static::_snakeToCamel($key);
                     $result->$key = $value;
                 }
                 $results[] = $result;
@@ -134,15 +220,18 @@
         }
 
         /**
-        * Create implementation.
-        */
+         * Create implementation.
+         **/
         protected function create( PDO $bdd ) {
-            $strQuery = 'INSERT INTO '.$this->_className.'s ( id, ';
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
+            $strQuery = 'INSERT INTO '.$this->_className.'s ( '. $primaryKey .', ';
             foreach (static::parameters() as $key => $attribute) { # append the attributes.
                 $strQuery .= $attribute.', ';
             }
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
-            $strQuery .= ' ) VALUES ( NULL, ';
+            $strQuery .= ' ) VALUES ( ';
+            $strQuery .= $this->$_primaryKey ? ':'.$primaryKey.', ' : '';
             foreach (static::parameters() as $key => $attribute) { # append the values.
                 $strQuery .= ':'.$attribute.', ';
             }
@@ -150,14 +239,18 @@
             $strQuery .= ' ) ;';
 
             $query = $bdd->prepare($strQuery);
+
+            $valPrimaryKey = $this->$_primaryKey ? $this->$_primaryKey : 'NULL';
+            if ($this->$_primaryKey) $query->bindValue($primaryKey, $valPrimaryKey); # bind the primaryKey if needed
             foreach (static::parameters() as $key => $attribute) {
-                $query->bindValue($attribute, $this->$attribute);
+                $newAttr = static::_snakeToCamel($attribute);
+                $query->bindValue($attribute, $this->$newAttr);
             }
 
             try {
                 $bdd->beginTransaction();
                 $query->execute() or die($query->errorinfo());
-                $this->_id = $bdd->lastInsertId();
+                $this->$_primaryKey = $bdd->lastInsertId();
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
@@ -168,18 +261,20 @@
 
 
         /**
-        * Update implementation.
-        */
+         * Update implementation.
+         **/
         protected function update( PDO $bdd ) {
+            $primaryKey = static::primaryKey();$
+            $_primaryKey = '_'.$primaryKey;
             $strQuery = 'UPDATE '.$this->_className.'s SET ';
             foreach (static::parameters() as $key => $attribute) { # append the attributes with their values.
                 $strQuery .= $attribute.' = :'.$attribute.', ';
             }
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
-            $strQuery .= ' WHERE id = :id ;';
+            $strQuery .= ' WHERE '.$primaryKey.' = :'.$primaryKey.';'; # primary key
 
             $query = $bdd->prepare($strQuery);
-            $query->bindValue(':id', $this->_id);
+            $query->bindValue(':'.$primaryKey, $this->$_primaryKey);
             foreach (static::parameters() as $key => $attribute) {
                 $query->bindValue($attribute, $this->$attribute);
             }
@@ -197,10 +292,12 @@
         }
 
         /**
-        * Create/Update call.
-        */
+         * Create/Update call.
+         **/
         public function save(PDO $bdd) {
-            if ($this->_id > 0) { # update.
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
+            if ($this->$_primaryKey > 0) { # update.
                 return $this->update($bdd);
             } else {
                 return $this->create($bdd);
@@ -208,15 +305,17 @@
         }
 
         /**
-        * Delete implementation.
-        */
+         * Delete implementation.
+         **/
         public function destroy(PDO $bdd) {
-            if ($this->_id < 1) return false;
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
+            if ($this->$primaryKey < 1) return false;
 
-            $strQuery = 'DELETE FROM '.$this->_className.'s WHERE id = :id ;';
+            $strQuery = 'DELETE FROM '.$this->_className.'s WHERE '.$primaryKey.' = :'.$primaryKey.' ;';
 
             $query = $bdd->prepare($strQuery);
-            $query->bindValue(':id', $this->_id);
+            $query->bindValue(':'.$primaryKey, $this->$_primaryKey);
 
             try {
                 $bdd->beginTransaction();
@@ -227,16 +326,18 @@
                 die('Error while doing in '.$this->_className.': '.$e->getMessage());
             }
 
-            $this->_id = NULL;
+            $this->$_primaryKey = NULL;
             return true;
         }
 
         /**
-        * Debug informations.
-        */
+         * Debug informations.
+         **/
         public function debug() {
+            $primaryKey = static::primaryKey();
+            $_primaryKey = '_'.$primaryKey;
             echo '---- Debug : '.$this->_className."<br>\n";
-            echo 'id : '.$this->id()."<br>\n";
+            echo $primaryKey.' : '.$this->id()."<br>\n";
             foreach (static::parameters() as $key => $attribute) {
                 echo $attribute.' : ';
                 echo var_dump($this->$attribute);
