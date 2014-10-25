@@ -149,7 +149,7 @@
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
             if (count($rows) < 1) {
-                die ('Unable to find '.$className.' with id '.$id.'.');
+                die ('Unable to find '.$className.' with id '.$primary.'.');
             }
             $result = new $className();
             foreach ($rows[0] as $key => $value) {
