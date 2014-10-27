@@ -5,23 +5,23 @@
     */
     class Ticket extends Model {
         protected static function attributes() {
-            return ['state', 'ouvert', 'ferme', 'id_borne', 'id_service'];
+            return ['state', 'ouvert', 'ferme', 'idBorne', 'idService'];
         }
 
-        public $state;
-        public $ouvert;
-        public $ferme;
-        public $id_borne;
+        public $State;
+        public $Ouvert;
+        public $Ferme;
+        public $IdBorne;
 
         protected $_borne;
         protected $_service;
 
         public function __construct() {
-            $this->state = 'en cours';
-            $this->ouvert = NULL;
-            $this->ferme = NULL;
-            $this->id_borne = NULL;
-            $this->id_service = NULL;
+            $this->State = 'en cours';
+            $this->Ouvert = NULL;
+            $this->Ferme = NULL;
+            $this->IdBorne = NULL;
+            $this->IdService = NULL;
             parent::__construct();
         }
 
@@ -30,7 +30,7 @@
                 throw new Exception("Error Empty Object");
             }
             if ($this->_borne == NULL || true) {
-                $this->_borne = Borne::Get($bdd, $this->id_borne);
+                $this->_borne = Borne::Get($bdd, $this->IdBorne);
             }
             return $this->_borne;
         }
@@ -40,7 +40,7 @@
                 throw new Exception("Error Empty Object");
             }
             if ($this->_service == NULL || true) {
-                $this->_service = Service::Get($bdd, $this->id_service);
+                $this->_service = Service::Get($bdd, $this->IdService);
             }
             return $this->_service;
         }

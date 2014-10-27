@@ -68,7 +68,7 @@
              * If you want to override this value, set the value in the child ctor
              **/
             foreach(static::attributes() as $key => $value) {
-                $newName = ucwords($key);
+                $newName = ucwords($value);
                 $this->$newName = NULL;
             }
 
@@ -191,7 +191,6 @@
             foreach ($bindedVariables as $key => $variable) {
                 $query->bindValue($key, $variable);
             }
-
             try {
                 $bdd->beginTransaction();
                 $query->execute() or die($query->errorinfo());
