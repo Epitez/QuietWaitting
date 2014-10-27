@@ -8,7 +8,11 @@
 			return ['name'];
 		}
 
-		public $name;
+		protected static function defaults() {
+			return ['name' => ''];
+		}
+
+		public $Name;
 
 		protected $_tickets;
 		protected $_guichets;
@@ -16,7 +20,6 @@
 		protected $_assoc_guichets_time = NULL;
 
 		public function __construct() {
-			$this->name = '';
 			parent::__construct();
 		}
 
@@ -57,8 +60,8 @@
 			if ($guichet->id() < 1) {
 				$guichet->save($bdd);
 			}
-			$assoc->id_service = $this->_id;
-			$assoc->id_guichet = $guichet->id();
+			$assoc->IdService = $this->_id;
+			$assoc->IdGuichet = $guichet->id();
 			$assoc->save($bdd);
 
 			return $guichet;

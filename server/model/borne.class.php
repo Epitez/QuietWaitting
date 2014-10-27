@@ -5,17 +5,19 @@
     */
     class Borne extends Model {
         protected static function attributes() {
-            return ['state', 'nb_delivered'];
+            return ['state', 'nbDelivered'];
         }
 
-        public $state;
-        public $nb_delivered;
+        protected static function defaults() {
+            return ['state' => 1, 'nbDelivered' => 0];
+        }
+
+        public $State;
+        public $NbDelivered;
 
         protected $_tickets;
 
         public function __construct() {
-            $this->state = 1;
-            $this->nb_delivered = 0;
             parent::__construct();
         }
 
@@ -36,8 +38,8 @@
                 throw new Exception("Error Empty Object");
             }
             $ticket = new Ticket();
-            $ticket->id_borne = $this->id();
-            $ticket->id_service = $service->id();
+            $ticket->IdBorne = $this->id();
+            $ticket->IdService = $service->id();
             $ticket->save($bdd);
             return $ticket;
         }

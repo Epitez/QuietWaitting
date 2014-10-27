@@ -8,15 +8,17 @@
             return ['name', 'ouvert'];
         }
 
-        public $name;
-        public $ouvert;
+        protected static function defaults() {
+            return ['name' => '', 'ouvert' => 0];
+        }
+
+        public $Name;
+        public $Ouvert;
 
         protected $_services;
         protected $_assoc_services;
 
         public function __construct() {
-            $this->name = '';
-            $this->ouvert = 0;
             parent::__construct();
         }
 
@@ -45,8 +47,8 @@
             if ($service->id() < 1) {
                 $service->save($bdd);
             }
-            $assoc->id_service = $service->id();
-            $assoc->id_guichet = $this->_id;
+            $assoc->IdService = $service->id();
+            $assoc->IdGuichet = $this->_id;
             $assoc->save($bdd);
 
             return $service;

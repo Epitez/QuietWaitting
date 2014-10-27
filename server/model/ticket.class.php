@@ -8,20 +8,20 @@
             return ['state', 'ouvert', 'ferme', 'idBorne', 'idService'];
         }
 
+        protected static function defaults() {
+            return ['state' => 'en cours'];
+        }
+
         public $State;
         public $Ouvert;
         public $Ferme;
         public $IdBorne;
+        public $IdService;
 
         protected $_borne;
         protected $_service;
 
         public function __construct() {
-            $this->State = 'en cours';
-            $this->Ouvert = NULL;
-            $this->Ferme = NULL;
-            $this->IdBorne = NULL;
-            $this->IdService = NULL;
             parent::__construct();
         }
 
