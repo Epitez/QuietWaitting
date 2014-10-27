@@ -22,7 +22,7 @@
          * Example : return 'id';
          **/
         protected static function primary() {
-            return String();
+            return 'id';
         }
 
         /**
@@ -144,7 +144,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while fetching '.$className.': '.$e->getMessage());
+                die('Error while fetching '.$className.': '.$e->getMessage().' --> '.$strQuery);
             }
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
@@ -182,7 +182,7 @@
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
             $strQuery .= ' FROM '.$className.'s';
             if (strlen($whereClause) > 0) {
-                $strQuery .= 'WHERE '.$whereClause.' ;';
+                $strQuery .= ' WHERE '.$whereClause.' ;';
             } else {
                 $strQuery .= ' ;';
             }
@@ -198,7 +198,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while fetching all '.$className.': '.$e->getMessage());
+                die('Error while fetching all '.$className.'s: '.$e->getMessage().' --> '.$strQuery);
             }
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
