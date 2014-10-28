@@ -1,0 +1,9 @@
+<phpunit bootstrap="server/tests/bootstrap.php" backupGlobals="false">
+
+    <testsuites>
+        <testsuite name="Models">
+        <directory suffix="test.php">server/tests/models/</directory>
+        </testsuite>
+    </testsuites>
+
+</phpunit>

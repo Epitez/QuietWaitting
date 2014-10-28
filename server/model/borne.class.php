@@ -5,13 +5,15 @@
     */
     class Borne extends Model {
         protected static function attributes() {
-            return ['state', 'nbDelivered'];
+            return ['token', 'type', 'state', 'nbDelivered'];
         }
 
         protected static function defaults() {
-            return ['state' => 1, 'nbDelivered' => 0];
+            return ['state' => 1, 'nbDelivered' => 0, 'token' => 0, 'type' => 'Borne'];
         }
 
+        public $Token;
+        public $Type;
         public $State;
         public $NbDelivered;
 
@@ -21,6 +23,10 @@
             parent::__construct();
         }
 
+        /**
+        * has_many tickets
+        * return an array of Ticket
+        */
         public function tickets(PDO $bdd) {
             if ($this->_id < 1) {
                 throw new Exception("Error Empty Object");
@@ -33,6 +39,10 @@
             return $this->_tickets;
         }
 
+        /**
+        * Create a ticket with this borne.
+        * return Ticket
+        */
         public function createTicket(PDO $bdd, Service $service) {
             if ($this->_id < 1 || $service->id() < 1) {
                 throw new Exception("Error Empty Object");

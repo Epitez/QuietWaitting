@@ -37,11 +37,11 @@
          * This is the column names of the model.
          **/
         protected static function parameters() {
-            $tmp = [];
+            $attributes = [];
             foreach(static::attributes() as $key => $value) {
-                array_push($tmp, static::_camelToSnake($value));
+                array_push($attributes, static::_camelToSnake($value));
             };
-            return $tmp;
+            return $attributes;
         }
 
         /**
@@ -112,10 +112,9 @@
 
         /**
          * Get implementation.
-         * If $primary is specified, will fetch the data in the database.
-         * You can add a where clause with $whereClause and the $bindedVariables.
+         * will fetch the data in the database with the given $primary as an id.
          **/
-        public static function Get(PDO $bdd, $primary, $whereClause = '', $bindedVariables = array()) {
+        public static function Get(PDO $bdd, $primary) {
             $className = strtolower(get_called_class());
             $attributes = static::parameters();
             $primaryKey = static::primaryKey();
@@ -126,17 +125,9 @@
                 $strQuery .= $attribute.', ';
             }
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
-            $strQuery .= ' FROM '.$className.'s WHERE ' . $primaryKey . ' = :'.$primaryKey;
-            if (strlen($whereClause) > 0) {
-                $strQuery .= ' AND '.$whereClause.' ;';
-            } else {
-                $strQuery .= ' ;';
-            }
+            $strQuery .= ' FROM '.$className.'s WHERE ' . $primaryKey . ' = :'.$primaryKey.' ;';
             $query = $bdd->prepare($strQuery);
             $query->bindValue(':'.$primaryKey, $primary); # bind the primary key
-            foreach ($bindedVariables as $key => $variable) {
-                $query->bindValue($key, $variable);
-            }
 
             try {
                 $bdd->beginTransaction();
@@ -144,12 +135,12 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while fetching '.$className.': '.$e->getMessage().' --> '.$strQuery);
+                throw new Exception('Error while fetching '.$className.': '.$e->getMessage().' --> '.$strQuery);
             }
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
             if (count($rows) < 1) {
-                die ('Unable to find '.$className.' with id '.$primary.'.');
+                throw new NotFoundException('Unable to find '.$className.' with id '.$primary.'.');
             }
             $result = new $className();
             foreach ($rows[0] as $key => $value) {
@@ -197,7 +188,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while fetching all '.$className.'s: '.$e->getMessage().' --> '.$strQuery);
+                throw new Exception('Error while fetching all '.$className.'s: '.$e->getMessage().' --> '.$strQuery);
             }
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
@@ -230,7 +221,7 @@
             }
             $strQuery = trim($strQuery, ", "); # remove the trailing ', '.
             $strQuery .= ' ) VALUES ( ';
-            $strQuery .= $this->$_primaryKey ? ':'.$primaryKey.', ' : '';
+            $strQuery .= $this->$_primaryKey ? ':'.$primaryKey.', ' : 'NULL, ';
             foreach (static::parameters() as $key => $attribute) { # append the values.
                 $strQuery .= ':'.$attribute.', ';
             }
@@ -253,7 +244,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while creating '.$this->_className.': '.$e->getMessage().', '.$strQuery);
+                throw new Exception('Error while creating '.$this->_className.': '.$e->getMessage().', '.$strQuery);
             }
             return $this;
         }
@@ -263,7 +254,7 @@
          * Update implementation.
          **/
         protected function update( PDO $bdd ) {
-            $primaryKey = static::primaryKey();$
+            $primaryKey = static::primaryKey();
             $_primaryKey = '_'.$primaryKey;
             $strQuery = 'UPDATE '.$this->_className.'s SET ';
             foreach (static::parameters() as $key => $attribute) { # append the attributes with their values.
@@ -275,7 +266,8 @@
             $query = $bdd->prepare($strQuery);
             $query->bindValue(':'.$primaryKey, $this->$_primaryKey);
             foreach (static::parameters() as $key => $attribute) {
-                $query->bindValue($attribute, $this->$attribute);
+                $newAttr = static::_snakeToCamel($attribute);
+                $query->bindValue($attribute, $this->$newAttr);
             }
 
             try {
@@ -284,7 +276,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while updating '.$this->_className.': '.$e->getMessage());
+                throw new Exception('Error while updating '.$this->_className.': '.$e->getMessage());
             }
 
             return $this;
@@ -309,7 +301,7 @@
         public function destroy(PDO $bdd) {
             $primaryKey = static::primaryKey();
             $_primaryKey = '_'.$primaryKey;
-            if ($this->$primaryKey < 1) return false;
+            if ($this->$_primaryKey < 1) return false;
 
             $strQuery = 'DELETE FROM '.$this->_className.'s WHERE '.$primaryKey.' = :'.$primaryKey.' ;';
 
@@ -322,7 +314,7 @@
                 $bdd->commit();
             } catch (PDOException $e) {
                 $bdd->rollback();
-                die('Error while doing in '.$this->_className.': '.$e->getMessage());
+                throw new Exception('Error while doing in '.$this->_className.': '.$e->getMessage());
             }
 
             $this->$_primaryKey = NULL;
@@ -345,6 +337,27 @@
             echo 'End Debug ----'."<br><br>\n\n";
         }
 
+        public function to_json() {
+            $begin = '{';
+            $end = '}';
+            $attribute_value_sep = ':';
+            $attributes_sep = ',';
+            $json = '';
+            foreach (static::parameters() as $key => $attribute) {
+                if (is_int($this->$attribute) || is_float($this->$attribute)) {
+                    $json .= '"'.$attribute.'"'.$attribute_value_sep.$this->$attribute.$attributes_sep;
+                } else {
+                    $json .= '"'.$attribute.'"'.$attribute_value_sep.'"'.$this->$attribute.'"'.$attributes_sep;
+                }
+            }
+            $json .= '"id":"'.$this->id().'"';
+            return $begin.$json.$end;
+        }
+
+    }
+
+    class NotFoundException extends Exception
+    {
     }
 
 

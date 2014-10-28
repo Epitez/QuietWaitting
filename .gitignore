@@ -1,2 +1,5 @@
 .DS*
 ._*
+
+server/bootstrap/config.php
+server/tests/test_config.php
