@@ -330,10 +330,11 @@
             $json = '';
             foreach (static::attributes() as $key => $attribute) {
                 $attribute = ucwords($attribute);
+                $camel_attribute = static::_camelToSnake($attribute);
                 if (is_int($this->$attribute) || is_float($this->$attribute)) {
-                    $json .= '"'.$attribute.'"'.$attribute_value_sep.$this->$attribute.$attributes_sep;
+                    $json .= '"'.$camel_attribute.'"'.$attribute_value_sep.$this->$attribute.$attributes_sep;
                 } else {
-                    $json .= '"'.$attribute.'"'.$attribute_value_sep.'"'.$this->$attribute.'"'.$attributes_sep;
+                    $json .= '"'.$camel_attribute.'"'.$attribute_value_sep.'"'.$this->$attribute.'"'.$attributes_sep;
                 }
             }
             $json .= '"id":"'.$this->id().'"';
