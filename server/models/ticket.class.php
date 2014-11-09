@@ -21,6 +21,12 @@
         /**
          * Call an other ticket (Increment and return the current called ticket)
          */
+        public static function CurrentCall() {
+            return static::$_CALLED_NUMBER;
+        }
+        /**
+         * Call an other ticket (Increment and return the current called ticket)
+         */
         public static function Next() {
             return ++static::$_CALLED_NUMBER;
         }
