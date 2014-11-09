@@ -1,14 +1,23 @@
 <?php
-include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
-$idGuichet = isset($_POST['id_guichet']) ? $_POST['id_guichet'] : isset($_GET['id_guichet']) ? $_GET['id_guichet'] : 1;
+	include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
-$result = $dbh->prepare('CALL CLOSE_GUICHET(:guichet)');
-$result->execute(array(':guichet' => $idGuichet));
+	try {
+		$params = Sanitize::get_params( array('id' => 0) );
 
-if ($result) {
-	http_response_code(200);
-} else {
-	http_response_code(401);
-}
+		// Fetch the guichet
+		$guichet = Guichet::Get($bdd, $params['id']);
+
+		$guichet->Ouvert = 0; // Open the guichet
+
+		$guichet->save($bdd); // Save it
+
+		http_response_code(200);
+		echo $guichet->to_json(); // Respond with the object
+
+	} catch (Exception $e) { // Something went wrong
+		http_response_code(500);
+		echo '{ error: true, errorMessage: "'.$e->getMessage().'" }';
+	}
+
 ?>
