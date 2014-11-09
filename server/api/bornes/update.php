@@ -3,7 +3,7 @@
     include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
     try {
-        $params = Sanitize::get_params( array('id' => 0, 'name' => 'Borne', 'ouvert' => 1), true, false );
+        $params = Sanitize::get_params( array('id' => 0, 'name' => '', 'ouvert' => 1), true, false );
         // false to ignore missing parameters
 
         // Fetch the borne
