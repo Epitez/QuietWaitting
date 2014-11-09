@@ -14,7 +14,7 @@
          * Example : return ['author', 'content', 'article', 'created_at'];
          **/
         protected static function attributes() {
-            return Array();
+            return Array(); // @codeCoverageIgnore
         }
 
         /**
@@ -30,7 +30,7 @@
          * Example : return ['name' => 'defaultValue'];
          **/
         protected static function defaults() {
-            return Array();
+            return Array(); // @codeCoverageIgnore
         }
 
         /**
@@ -129,14 +129,7 @@
             $query = $bdd->prepare($strQuery);
             $query->bindValue(':'.$primaryKey, $primary); # bind the primary key
 
-            try {
-                $bdd->beginTransaction();
-                $query->execute() or die($query->errorinfo());
-                $bdd->commit();
-            } catch (PDOException $e) {
-                $bdd->rollback();
-                throw new Exception('Error while fetching '.$className.': '.$e->getMessage().' --> '.$strQuery);
-            }
+            $query = static::execute($bdd, $query);
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
             if (count($rows) < 1) {
@@ -182,14 +175,7 @@
             foreach ($bindedVariables as $key => $variable) {
                 $query->bindValue($key, $variable);
             }
-            try {
-                $bdd->beginTransaction();
-                $query->execute() or die($query->errorinfo());
-                $bdd->commit();
-            } catch (PDOException $e) {
-                $bdd->rollback();
-                throw new Exception('Error while fetching all '.$className.'s: '.$e->getMessage().' --> '.$strQuery);
-            }
+            $query = static::execute($bdd, $query);
 
             $rows = $query->FetchALL(PDO::FETCH_ASSOC);
             $results = Array();
@@ -243,8 +229,8 @@
                 $this->$_primaryKey = $bdd->lastInsertId();
                 $bdd->commit();
             } catch (PDOException $e) {
-                $bdd->rollback();
-                throw new Exception('Error while creating '.$this->_className.': '.$e->getMessage().', '.$strQuery);
+                $bdd->rollback(); // @codeCoverageIgnore
+                throw new Exception('[SQL]['.$this->_className.'] Error while executing >>'.$query->queryString.'<< : '.$e->getMessage()); // @codeCoverageIgnore
             }
             return $this;
         }
@@ -270,14 +256,7 @@
                 $query->bindValue($attribute, $this->$newAttr);
             }
 
-            try {
-                $bdd->beginTransaction();
-                $query->execute() or die($query->errorinfo());
-                $bdd->commit();
-            } catch (PDOException $e) {
-                $bdd->rollback();
-                throw new Exception('Error while updating '.$this->_className.': '.$e->getMessage());
-            }
+            $query = static::execute($bdd, $query);
 
             return $this;
         }
@@ -308,17 +287,23 @@
             $query = $bdd->prepare($strQuery);
             $query->bindValue(':'.$primaryKey, $this->$_primaryKey);
 
-            try {
-                $bdd->beginTransaction();
-                $query->execute() or die($query->errorinfo());
-                $bdd->commit();
-            } catch (PDOException $e) {
-                $bdd->rollback();
-                throw new Exception('Error while doing in '.$this->_className.': '.$e->getMessage());
-            }
+            $query = static::execute($bdd, $query);
 
             $this->$_primaryKey = NULL;
             return true;
+        }
+
+        protected static function execute($bdd, $query) {
+            try {
+                $bdd->beginTransaction();
+                $query->execute() or die($query->errorinfo());
+                // echo ($query['queryString']);
+                $bdd->commit();
+            } catch (PDOException $e) {
+                $bdd->rollback(); // @codeCoverageIgnore
+                throw new Exception('[SQL]['.get_called_class().'] Error while executing >>'.$query->queryString.'<< : '.$e->getMessage()); // @codeCoverageIgnore
+            }
+            return $query;
         }
 
         /**

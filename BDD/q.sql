@@ -1,13 +1,16 @@
 -- phpMyAdmin SQL Dump
--- version 4.2.7.1
+-- version 4.2.10.1
 -- http://www.phpmyadmin.net
 --
--- Client :  127.0.0.1
--- Généré le :  Mar 21 Octobre 2014 à 13:37
--- Version du serveur :  5.6.20
--- Version de PHP :  5.5.15
+-- Host: 127.0.0.1
+-- Generation Time: Nov 09, 2014 at 02:48 AM
+-- Server version: 5.6.21
+-- PHP Version: 5.5.14
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -17,17 +20,21 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8 */;
 
 --
--- Base de données :  `q`
+-- Database: `q`
 --
+CREATE DATABASE IF NOT EXISTS `q` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `q`;
 
 DELIMITER $$
 --
--- Procédures
+-- Procedures
 --
+DROP PROCEDURE IF EXISTS `AJOUTER_SERVICE`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `AJOUTER_SERVICE`(IN `P_NOM_SERVICE` TEXT)
     NO SQL
 INSERT INTO services (name) VALUES (P_NOM_SERVICE)$$
 
+DROP PROCEDURE IF EXISTS `CLOSE_GUICHET`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CLOSE_GUICHET`(IN `P_ID_GUICHET` INT)
 BEGIN
 
@@ -38,6 +45,7 @@ BEGIN
     DELETE FROM services_par_guichet WHERE id_guichet = P_ID_GUICHET;
 END$$
 
+DROP PROCEDURE IF EXISTS `CLOSE_TICKET`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CLOSE_TICKET`(IN `P_ID_TICKET` INT)
     NO SQL
 UPDATE ticket
@@ -45,6 +53,7 @@ SET state = 'fini',
 	ferme = NOW()
 WHERE id = P_ID_TICKET$$
 
+DROP PROCEDURE IF EXISTS `CLOSE_TICKET_ABSENT`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CLOSE_TICKET_ABSENT`(IN `P_ID_TICKET` INT)
     NO SQL
 UPDATE ticket
@@ -52,17 +61,20 @@ UPDATE ticket
     	absent = '1'
 WHERE id = P_ID_TICKET$$
 
+DROP PROCEDURE IF EXISTS `ETAT_TICKET`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `ETAT_TICKET`(IN `P_ID_TICKET` INT)
     NO SQL
 SELECT state FROM ticket
 WHERE id = P_ID_TICKET$$
 
+DROP PROCEDURE IF EXISTS `LISTER_SERVICES`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `LISTER_SERVICES`()
     READS SQL DATA
 SELECT *
 FROM services
 GROUP BY services.id$$
 
+DROP PROCEDURE IF EXISTS `LISTER_SERVICE_GUICHET`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `LISTER_SERVICE_GUICHET`(IN `P_ID_GUICHET` INT)
     NO SQL
 SELECT *
@@ -70,8 +82,9 @@ FROM services_par_guichet
 WHERE services_par_guichet.id_guichet = P_ID_GUICHET$$
 
 --
--- Fonctions
+-- Functions
 --
+DROP FUNCTION IF EXISTS `INSERT_TICKET`$$
 CREATE DEFINER=`root`@`localhost` FUNCTION `INSERT_TICKET`(`P_ID_SERVICES` INT, `P_ID_BORNE` INT) RETURNS int(11)
 BEGIN
 
@@ -86,140 +99,173 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
--- Structure de la table `borne`
+-- Table structure for table `bornes`
 --
 
-CREATE TABLE IF NOT EXISTS `borne` (
-`id` int(3) NOT NULL,
+DROP TABLE IF EXISTS `bornes`;
+CREATE TABLE IF NOT EXISTS `bornes` (
+`id` int(11) NOT NULL,
   `state` tinyint(1) NOT NULL,
-  `nb_delivered` int(3) NOT NULL
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+  `nb_delivered` int(11) NOT NULL,
+  `token` int(11) NOT NULL,
+  `type` text NOT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `guichet`
+-- Table structure for table `guichets`
 --
 
-CREATE TABLE IF NOT EXISTS `guichet` (
+DROP TABLE IF EXISTS `guichets`;
+CREATE TABLE IF NOT EXISTS `guichets` (
 `id` int(11) NOT NULL,
   `name` text NOT NULL,
   `ouvert` tinyint(1) NOT NULL
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `services`
+-- Table structure for table `services`
 --
 
+DROP TABLE IF EXISTS `services`;
 CREATE TABLE IF NOT EXISTS `services` (
-`id` int(3) NOT NULL COMMENT 'cle primaire',
+`id` int(11) NOT NULL COMMENT 'cle primaire',
   `name` text NOT NULL COMMENT 'nom du service'
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `services_par_guichet`
+-- Table structure for table `services_par_guichets`
 --
 
-CREATE TABLE IF NOT EXISTS `services_par_guichet` (
-  `id` int(11) NOT NULL DEFAULT '0',
+DROP TABLE IF EXISTS `services_par_guichets`;
+CREATE TABLE IF NOT EXISTS `services_par_guichets` (
+`id` int(11) NOT NULL,
   `id_guichet` int(11) DEFAULT NULL,
   `id_service` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+--
+-- RELATIONS FOR TABLE `services_par_guichets`:
+--   `id_guichet`
+--       `guichets` -> `id`
+--   `id_service`
+--       `services` -> `id`
+--
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `ticket`
+-- Table structure for table `tickets`
 --
 
-CREATE TABLE IF NOT EXISTS `ticket` (
-`id` int(3) NOT NULL,
+DROP TABLE IF EXISTS `tickets`;
+CREATE TABLE IF NOT EXISTS `tickets` (
+`id` int(11) NOT NULL,
+  `number` int(11) NOT NULL,
+  `session` int(11) NOT NULL,
   `state` text NOT NULL COMMENT 'en cours/traite/annulé/rappel',
   `absent` tinyint(1) NOT NULL DEFAULT '0',
-  `ouvert` datetime NOT NULL COMMENT 'date emission',
-  `ferme` datetime NOT NULL COMMENT 'date fin',
+  `ouvert` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'date emission',
+  `ferme` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'date fin',
   `id_borne` int(11) NOT NULL,
   `id_service` int(11) NOT NULL
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=388 ;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 --
--- Index pour les tables exportées
+-- RELATIONS FOR TABLE `tickets`:
+--   `id_borne`
+--       `bornes` -> `id`
+--   `id_service`
+--       `services` -> `id`
 --
 
 --
--- Index pour la table `borne`
+-- Indexes for dumped tables
 --
-ALTER TABLE `borne`
+
+--
+-- Indexes for table `bornes`
+--
+ALTER TABLE `bornes`
  ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `guichet`
+-- Indexes for table `guichets`
 --
-ALTER TABLE `guichet`
+ALTER TABLE `guichets`
  ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `services`
+-- Indexes for table `services`
 --
 ALTER TABLE `services`
  ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `services_par_guichet`
+-- Indexes for table `services_par_guichets`
 --
-ALTER TABLE `services_par_guichet`
- ADD PRIMARY KEY (`id`), ADD KEY `FK_SERVICES_PAR_GUICHER_ID_GUICHET` (`id_guichet`);
+ALTER TABLE `services_par_guichets`
+ ADD PRIMARY KEY (`id`), ADD KEY `FK_SERVICES_PAR_GUICHER_ID_GUICHET` (`id_guichet`), ADD KEY `FK_SERVICES_PAR_GUICHER_ID_SERVICES` (`id_service`);
 
 --
--- Index pour la table `ticket`
+-- Indexes for table `tickets`
 --
-ALTER TABLE `ticket`
+ALTER TABLE `tickets`
  ADD PRIMARY KEY (`id`), ADD KEY `id_borne_2` (`id_borne`), ADD KEY `id_service` (`id_service`);
 
 --
--- AUTO_INCREMENT pour les tables exportées
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT pour la table `borne`
+-- AUTO_INCREMENT for table `bornes`
 --
-ALTER TABLE `borne`
-MODIFY `id` int(3) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
+ALTER TABLE `bornes`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1;
 --
--- AUTO_INCREMENT pour la table `guichet`
+-- AUTO_INCREMENT for table `guichets`
 --
-ALTER TABLE `guichet`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
+ALTER TABLE `guichets`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1;
 --
--- AUTO_INCREMENT pour la table `services`
+-- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-MODIFY `id` int(3) NOT NULL AUTO_INCREMENT COMMENT 'cle primaire',AUTO_INCREMENT=4;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'cle primaire',AUTO_INCREMENT=1;
 --
--- AUTO_INCREMENT pour la table `ticket`
+-- AUTO_INCREMENT for table `services_par_guichets`
 --
-ALTER TABLE `ticket`
-MODIFY `id` int(3) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=388;
+ALTER TABLE `services_par_guichets`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1;
 --
--- Contraintes pour les tables exportées
+-- AUTO_INCREMENT for table `tickets`
+--
+ALTER TABLE `tickets`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1;
+--
+-- Constraints for dumped tables
 --
 
 --
--- Contraintes pour la table `services_par_guichet`
+-- Constraints for table `services_par_guichets`
 --
-ALTER TABLE `services_par_guichet`
-ADD CONSTRAINT `FK_SERVICES_PAR_GUICHER_ID_GUICHET` FOREIGN KEY (`id_guichet`) REFERENCES `guichet` (`id`);
+ALTER TABLE `services_par_guichets`
+ADD CONSTRAINT `FK_SERVICES_PAR_GUICHER_ID_GUICHET` FOREIGN KEY (`id_guichet`) REFERENCES `guichets` (`id`),
+ADD CONSTRAINT `FK_SERVICES_PAR_GUICHER_ID_SERVICES` FOREIGN KEY (`id_service`) REFERENCES `services` (`id`);
 
 --
--- Contraintes pour la table `ticket`
+-- Constraints for table `tickets`
 --
-ALTER TABLE `ticket`
-ADD CONSTRAINT `ticket_ibfk_1` FOREIGN KEY (`id_borne`) REFERENCES `borne` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-ADD CONSTRAINT `ticket_ibfk_2` FOREIGN KEY (`id_service`) REFERENCES `services` (`id`);
+ALTER TABLE `tickets`
+ADD CONSTRAINT `tickets_ibfk_1` FOREIGN KEY (`id_borne`) REFERENCES `bornes` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+ADD CONSTRAINT `tickets_ibfk_2` FOREIGN KEY (`id_service`) REFERENCES `services` (`id`);
+SET FOREIGN_KEY_CHECKS=1;
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

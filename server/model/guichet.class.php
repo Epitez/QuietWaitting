@@ -42,7 +42,11 @@
             if ($this->_id < 1) {
                 throw new Exception("Error Empty Object");
             }
-            $this->services($bdd);
+            foreach ($this->services($bdd) as $key => $s) {
+                if ($s->id() == $service->id()) {
+                    return $s;
+                }
+            }
             $assoc = new Services_par_guichet();
             if ($service->id() < 1) {
                 $service->save($bdd);
@@ -52,6 +56,25 @@
             $assoc->save($bdd);
 
             return $service;
+        }
+        public function removeService(PDO $bdd, Service $service) {
+            if ($this->_id < 1) {
+                throw new Exception("Error Empty Object");
+            }
+            foreach ($this->services($bdd) as $key => $s) {
+                if ($s->id() == $service->id()) {
+                    $assoc = Services_par_guichet::GetAll($bdd,
+                            $whereClause = 'id_guichet = :id_guichet AND id_service = :id_service',
+                            $bindedVariables = array(':id_guichet' => $this->_id, ':id_service' => $service->id()));
+                    if (count($assoc) != 1) {
+                        throw new Exception("Error Missing Association");
+                    }
+                    $assoc = $assoc[0];
+                    $assoc->destroy($bdd);
+                    return $this;
+                }
+            }
+            return NULL;
         }
 
     }

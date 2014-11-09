@@ -2,6 +2,7 @@
     class BorneTest extends PHPUnit_Framework_TestCase
     {
         public static $BorneId = 0;
+        public static $BorneId2 = 0;
 
         public function testNewBorne() {
             global $bdd;
@@ -67,6 +68,7 @@
             global $bdd;
             $borne1 = new Borne();
             $borne1->save($bdd);
+            BorneTest::$BorneId2 = $borne1->id();
             $borne2 = Borne::Get($bdd, BorneTest::$BorneId);
             $bornes = Borne::GetAll($bdd);
             $b1Found = false;
@@ -95,6 +97,7 @@
             $borne = Borne::Get($bdd, BorneTest::$BorneId);
             $borne->destroy($bdd);
             $this->assertNull($borne->id());
+            Borne::Get($bdd, BorneTest::$BorneId2)->destroy($bdd);
             Borne::Get($bdd, BorneTest::$BorneId);
         }
     }
