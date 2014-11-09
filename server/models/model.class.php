@@ -328,7 +328,8 @@
             $attribute_value_sep = ':';
             $attributes_sep = ',';
             $json = '';
-            foreach (static::parameters() as $key => $attribute) {
+            foreach (static::attributes() as $key => $attribute) {
+                $attribute = ucwords($attribute);
                 if (is_int($this->$attribute) || is_float($this->$attribute)) {
                     $json .= '"'.$attribute.'"'.$attribute_value_sep.$this->$attribute.$attributes_sep;
                 } else {
