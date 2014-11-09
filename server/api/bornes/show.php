@@ -8,10 +8,6 @@
         // Fetch the borne
         $borne = Borne::Get($bdd, $params['id']);
 
-        $borne->State = 1; // Open the borne
-
-        $borne->save($bdd); // Save it
-
         http_response_code(200);
         echo $borne->to_json(); // Respond with the object
 

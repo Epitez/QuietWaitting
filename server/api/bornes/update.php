@@ -3,12 +3,13 @@
     include($_SERVER['DOCUMENT_ROOT'].'/bootstrap/start.php');
 
     try {
-        $params = Sanitize::get_params( array('id' => 0) );
+        $params = Sanitize::get_params( array('id' => 0, 'name' => 'Borne', 'ouvert' => 1), true, false );
+        // false to ignore missing parameters
 
         // Fetch the borne
         $borne = Borne::Get($bdd, $params['id']);
 
-        $borne->State = 1; // Open the borne
+        $borne = Sanitize::fill_attributes($borne, $params);
 
         $borne->save($bdd); // Save it
 

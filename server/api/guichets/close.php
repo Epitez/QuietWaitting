@@ -8,7 +8,7 @@
 		// Fetch the guichet
 		$guichet = Guichet::Get($bdd, $params['id']);
 
-		$guichet->Ouvert = 0; // Open the guichet
+		$guichet->Ouvert = 0; // Close the guichet
 
 		$guichet->save($bdd); // Save it
 
