@@ -51,6 +51,8 @@
             $ticket->IdBorne = $this->id();
             $ticket->IdService = $service->id();
             $ticket->save($bdd);
+            $this->NbDelivered += 1;
+            $this->save($bdd);
             return $ticket;
         }
 

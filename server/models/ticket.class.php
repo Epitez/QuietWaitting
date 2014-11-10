@@ -22,13 +22,15 @@
          * Call an other ticket (Increment and return the current called ticket)
          */
         public static function Next() {
-            return ++static::$_CALLED_NUMBER;
+            static::$_CALLED_NUMBER = static::$_CALLED_NUMBER + 1;
+            return static::$_CALLED_NUMBER;
         }
         /**
          * Increment and Return the Ticket number (distributed)
          */
         public static function NextDistributed() {
-            return ++static::$_CURRENT_NUMBER;
+            static::$_CURRENT_NUMBER = static::$_CURRENT_NUMBER + 1;
+            return static::$_CURRENT_NUMBER;
         }
         /**
          * Return the LAST DISTRIBUTED Ticket number
