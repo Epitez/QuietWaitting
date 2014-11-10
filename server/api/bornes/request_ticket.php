@@ -9,7 +9,7 @@
         $borne = Borne::Get($bdd, $params['id']);
 
         // Fetch the service
-        $service = Service::Get($bdd, $params['id']);
+        $service = Service::Get($bdd, $params['id_service']);
 
         $ticket = $borne->createTicket($bdd, $service);
 
